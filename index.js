@@ -12,40 +12,45 @@ app.use(express.static('public'));
 app.post('/calculate', (req, res) => {
     const { walls, doors, windows } = req.body;
 
-    const doorArea = 2.0 * 0.8; // Assumindo portas de 2m x 0.8m
-    const windowArea = 1.2 * 1.2; // Assumindo janelas de 1.2m x 1.2m
-    const coveragePerLiter = 5; // 1 litro de tinta cobre 5m²
-
-    let totalArea = 0;
-
-    walls.forEach((wall, index) => {
-        let wallArea = wall.height * wall.width;
-        let doorAreaTotal = doors[index] * doorArea;
-        let windowAreaTotal = windows[index] * windowArea;
-        totalArea += wallArea - doorAreaTotal - windowAreaTotal;
-    });
-
-    const paintNeeded = totalArea / coveragePerLiter;
-    const canSizes = [18, 3.6, 2.5, 0.5];
-    let cans = [];
-
-    let remainingPaint = paintNeeded;
-
-    for (let size of canSizes) {
-        let count = Math.floor(remainingPaint / size);
-        if (count > 0) {
-            cans.push({ size, count });
-            remainingPaint -= count * size;
+    try {
+        
+        const doorArea = 2.0 * 0.8; // Assumindo portas de 2m x 0.8m
+        const windowArea = 1.2 * 1.2; // Assumindo janelas de 1.2m x 1.2m
+        const coveragePerLiter = 5; // 1 litro de tinta cobre 5m²
+    
+        let totalArea = 0;
+    
+        walls.forEach((wall, index) => {
+            let wallArea = wall.height * wall.width;
+            let doorAreaTotal = doors[index] * doorArea;
+            let windowAreaTotal = windows[index] * windowArea;
+            totalArea += wallArea - doorAreaTotal - windowAreaTotal;
+        });
+    
+        const paintNeeded = totalArea / coveragePerLiter;
+        const canSizes = [18, 3.6, 2.5, 0.5];
+        let cans = [];
+    
+        let remainingPaint = paintNeeded;
+    
+        for (let size of canSizes) {
+            let count = Math.floor(remainingPaint / size);
+            if (count > 0) {
+                cans.push({ size, count });
+                remainingPaint -= count * size;
+            }
         }
+    
+        if (remainingPaint > 0) {
+            let smallestCan = canSizes[canSizes.length - 1];
+            let count = Math.ceil(remainingPaint / smallestCan);
+            cans.push({ size: smallestCan, count });
+        }
+    
+        res.json({ totalArea, paintNeeded, cans }, 200);
+    } catch (error) {
+        res.json({ "Menssagem: ":error }, 500);
     }
-
-    if (remainingPaint > 0) {
-        let smallestCan = canSizes[canSizes.length - 1];
-        let count = Math.ceil(remainingPaint / smallestCan);
-        cans.push({ size: smallestCan, count });
-    }
-
-    res.json({ totalArea, paintNeeded, cans });
 });
 
 app.listen(PORT, () => {
